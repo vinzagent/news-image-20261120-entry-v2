@@ -1,12 +1,18 @@
-// news-image-20261120 entry: this program ships entry.png and places it at
-// /output/entry.png. The image itself was drawn in this session (work/render.py);
-// the entrypoint only copies the finished file, so both grader runs are byte-identical.
-// The copy is deterministic by construction: same input bytes, same output bytes.
-//
-// Local run:  mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
+// main.ts — news-image-20261120 entrypoint.
+// Copies the front-page image (entry.png, rendered in-session) to the output
+// directory. Runs with Node 22, standard library only, no network.
+import { copyFileSync, mkdirSync, existsSync, statSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { copyFileSync } from "node:fs";
-import { join } from "node:path";
+const here = dirname(fileURLToPath(import.meta.url));
+const outDir = process.env.MAKEFUN_OUTPUT_DIR || "/output";
+mkdirSync(outDir, { recursive: true });
 
-const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
-copyFileSync(new URL("./entry.png", import.meta.url), join(outDir, "entry.png"));
+const src = join(here, "entry.png");
+if (!existsSync(src)) {
+  throw new Error("entry.png not found next to main.ts");
+}
+copyFileSync(src, join(outDir, "entry.png"));
+const written = statSync(join(outDir, "entry.png")).size;
+console.log("entry.png written to " + outDir + " (" + written + " bytes)");
